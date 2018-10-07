@@ -28,3 +28,23 @@ const bbs_test5 = blum_blum_shub(383, 503, 104);
 console.log(bbs_test5.join(''))
 console.log(bbs_test5.join('').length)
 console.log(parseInt(bbs_test5.join(''), 2))
+
+
+// CLEAN THIS UP, ALL CRYPTO FUNCTIONS SHOULD BE TESTED/DEMONSTRATED HERE!
+
+
+
+/*
+console.log(modulo_of_fraction(-3,6,23))
+
+console.log('----Add [3,10] and [9,7]: ', EC.point_add([3,10], [9,7]))
+
+console.log('----Double [9,7]: ', EC.point_double([3,10]))
+
+
+
+for (let i = 0; i <= 97; i++) {
+    console.log(EC.point_multiplication([3, 6], i))
+}
+
+*/

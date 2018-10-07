@@ -26,5 +26,5 @@ module.exports  = function blum_blum_shub (p, q, seed) {
 }
 
 function is_prime () {
-
+    
 }

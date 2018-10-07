@@ -1,25 +1,16 @@
 const net = require('net');
-const fs = require('fs');
-const readline = require('readline');
-const crypto = require('crypto');
 
 const program = require('commander');
 const axios = require('axios');
 
 const EllipticCurve = require('./elliptic-curve');
-const { modulo_of_fraction } = require('./helpers');
-const blum_blum_shub = require('./blum-blum-shub');
+const { modulo_of_fraction, store_keys, get_keys, isJson } = require('./helpers');
+const MessageHandler = require('./MessageHandler');
 
-
-
-
-// Code tcp client server code
-// connect to specified IP
 
 
 // Code diffie-hellman algorithm 
 
-// Code PRNG (RC4 i think)
 
 // Setup AES communication between the two parties
 
@@ -41,18 +32,20 @@ program
     .option('-p, --prime [number]', 'The prime ensuring the group is finite and limited to Zp', 23)
     .option('-c, --cardinality [number]', 'The cardinality of the elliptic curve over Zp', 27)
     .option('-u, --username <name>', 'Username to be displayed next to your messages.')
-    .option('-s, --spawn [boolean]', 'Spawn new private and public key', true)
+    .option('-s, --spawn-keys [boolean]', 'Spawn new private and public key', true)
     .option('-f, --file [path]', 'Path to file to send', undefined)
     .parse(process.argv);
 
 
+/**
+ * First a public and private key pair is established. This is done either by using a TRNG to get a private key
+ * and then calculate a public key, or the previously generated keys are loaded from a file.
+ */
 
-if (program.spawn || true) {
-
+if (program.spawnKeys || true) {
     var EC = new EllipticCurve(program.a, program.b, program.generator, program.prime, program.cardinality); // 2,3,[3,6], 97,5
     var private_key = null;
     var public_key = null;
-    var aes_key = null;
 
     // True random source to generate private key:
     axios.post('https://api.random.org/json-rpc/1/invoke', {
@@ -94,30 +87,58 @@ if (program.spawn || true) {
 }
 
 
+/**
+ * The network communication code.
+ * Either the TCP server is started or a TCP client will try to connect to the server.
+ * Various event listeners are registered, most notably the 'data' handler which invokes
+ * processing of messages.
+ */
+
+
 function start_client_or_server() {
     if (program.mode === 'server') {
-        const server = net.createServer((c) => {
+        let messageHandler
+
+        const server = net.createServer((connection) => {
             console.log('client connected');
+            messageHandler = new MessageHandler(connection, program);
 
-            setup_readline(c)
-
-            c.write(JSON.stringify({
+            connection.write(JSON.stringify({
                 type: 'public_key',
+                username: program.username,
                 public_key: public_key,
             }))
 
-            c.on('data', (data) => {
-                console.log(data.toString())
-                const message = JSON.parse(data);
-                handleMessage(message);
+            connection.on('data', (data) => {
+                // console.log(data.toString())
+                if (isJson(data)) {
+                    const message = JSON.parse(data);
+
+                    if (message.type === 'public_key') {
+                        messageHandler.public_key_of_other = message.public_key;
+                        messageHandler.aes_key = EC.generate_symmetric_key(message.public_key, private_key);
+                        console.log(messageHandler.aes_key)
+                        connection.write(JSON.stringify({
+                            type: 'aes_key_established'
+                        }));
+                        if (messageHandler.aes_key_established) messageHandler.rl.resume();
+                    } else if (message.type === 'aes_key_established') {
+                        messageHandler.aes_key_established = true;
+                        if (messageHandler.aes_key) messageHandler.rl.resume();
+                    }
+                }
+
+                if (messageHandler.aes_key_established && messageHandler.aes_key) {
+                    messageHandler.handle_reception_of_message(data)
+                }
 
             })
 
-            c.on('error', (err) => {
+            connection.on('error', (err) => {
                 console.log('Connection error: ', err)
             })
 
-            c.on('end', () => {
+            connection.on('end', () => {
                 console.log('client disconnected');
             });
 
@@ -136,28 +157,56 @@ function start_client_or_server() {
 
 
     } else if (program.mode === 'client') {
-        const client = net.createConnection({ port: program.port }, () => {
-            console.log('connected to server on port: ', program.port);
 
-            client.write(JSON.stringify({
+        let messageHandler;
+
+        const connection = net.createConnection({ port: program.port }, () => {
+            console.log('connected to server on port: ', program.port);
+            messageHandler = new MessageHandler(connection, program)
+
+            connection.write(JSON.stringify({
                 type: 'public_key',
+                username: program.username,
                 public_key: public_key,
             }));
         });
 
-        client.on('data', (data) => {
-            console.log(data.toString());
-            const message = JSON.parse(data);
-            handleMessage(message)
+        connection.on('data', (data) => {
+            // console.log(data.toString());
+
+            if (isJson(data)) {
+                const message = JSON.parse(data);
+                console.log(message)
+                if (message.type === 'public_key') {
+                    messageHandler.public_key_of_other = message.public_key;
+                    messageHandler.aes_key = EC.generate_symmetric_key(message.public_key, private_key);
+                    console.log(messageHandler.aes_key)
+                    connection.write(JSON.stringify({
+                        type: 'aes_key_established'
+                    }));
+
+                    if (messageHandler.aes_key_established) messageHandler.rl.resume();
+                } else if (message.type === 'aes_key_established') {
+                    messageHandler.aes_key_established = true;
+
+                    if (messageHandler.aes_key) messageHandler.rl.resume();
+                }
+            }
+
+            
+
+            if (messageHandler.aes_key_established && messageHandler.aes_key) {
+                messageHandler.handle_reception_of_message(data)
+            }
+            
         });
 
-        client.on('error', (err) => {
+        connection.on('error', (err) => {
             console.log(err);
-            client.close();
             process.exit(1);
         })
 
-        client.on('end', () => {
+        connection.on('end', () => {
             console.log('disconnected from server');
         });
 
@@ -171,86 +220,5 @@ function start_client_or_server() {
     }
 }
 
-function handleMessage(message) {
-
-}
 
 
-function setup_readline(connection) {
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-        prompt: program.username + '> '
-    });
-
-    rl.prompt();
-
-    // need access to client and server
-
-    rl.on('line', (line) => {
-        switch (line.trim()) {
-            case '.exit':
-                rl.close();
-                break;
-            case '.new_keys':
-                // initiate new key exchange
-
-                break;
-            case /^\.file .*$/:
-                // send file
-
-                break;
-            default:
-                // send message
-
-
-                break;
-        }
-        rl.prompt();
-    }).on('close', () => {
-        console.log('Have a great day!');
-        process.exit(0);
-    });
-}
-
-
-function store_keys(private_key, public_key) {
-    const keys = {
-        private_key: private_key,
-        public_key: public_key
-    }
-    try {
-        fs.writeFileSync('./keys.txt', JSON.stringify(keys))
-    } catch (error) {
-        console.log(error)
-        process.exit(1);
-    }
-}
-
-function get_keys() {
-    try {
-        const data = fs.readFileSync('./keys.txt');
-        const keys = JSON.parse(data);
-        return keys
-    } catch (error) {
-        console.log(error);
-        process.exit(1);
-    }
-}
-
-
-
-/*
-console.log(modulo_of_fraction(-3,6,23))
-
-console.log('----Add [3,10] and [9,7]: ', EC.point_add([3,10], [9,7]))
-
-console.log('----Double [9,7]: ', EC.point_double([3,10]))
-
-
-
-for (let i = 0; i <= 97; i++) {
-    console.log(EC.point_multiplication([3, 6], i))
-}
-
-*/

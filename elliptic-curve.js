@@ -1,5 +1,6 @@
 // A rudimentary implementation of Elliptic Curves over Zp
 const { modulo_of_fraction, mod } = require('./helpers')
+const blum_blum_shub = require('./blum-blum-shub');
 
 module.exports = class EllipticCurve {
     constructor (a, b, G, p, cardinality) {
@@ -9,6 +10,14 @@ module.exports = class EllipticCurve {
         this.G = G;
         this.p = p;
         this.cardinality = cardinality
+    }
+
+    generate_symmetric_key (public_key_of_other, private_key) {
+        console.log(public_key_of_other, private_key)
+        const shared_point = this.point_multiplication(public_key_of_other, private_key);
+        const seed = parseInt(shared_point.join(''), 10);
+        const bits = blum_blum_shub(383, 503, seed);
+        return bits.join('');
     }
 
     generate_public_key (n) {
