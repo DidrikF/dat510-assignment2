@@ -1,1 +1,1 @@
-{"private_key":19,"public_key":[0,22]}
+{"private_key":8,"public_key":[13,7]}

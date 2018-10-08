@@ -8,30 +8,21 @@ const EllipticCurve = require('./elliptic-curve');
 const { store_keys, get_keys, isJson } = require('./helpers');
 const MessageHandler = require('./MessageHandler');
 
-
-
-// Code diffie-hellman algorithm 
-
-
-// Setup AES communication between the two parties
-
-// Enable sending of messages
-// Enable sending of files!
-
-
 const random_org_api_key = 'd70ec30e-8eeb-4c72-ab8c-3ad7749908e1';
 
-
+/**
+ * Parse command line arguments using the commander module.
+ */
 program
     .version('0.1.0')
     .option('-i, --ip [ip_address]', 'The ip address to connect to or bind the server to.', 'localhost')
     .option('-o, --port [number]', 'Port to listen on, or connect to', 3000)
     .option('-m, --mode [type]', 'Start in client or server mode', 'server')
-    .option('-a, --a [coefficient]', 'The "a" coefficient for the elliptic curve equation', 1)
-    .option('-b, --b [coefficient]', 'The "b" coefficient for the elliptic curve equation', 1)
-    .option('-g, --generator [point]', 'The generator (starting point) for the elliptic curve', [3, 10])
-    .option('-p, --prime [number]', 'The prime ensuring the group is finite and limited to Zp', 23)
-    .option('-c, --cardinality [number]', 'The cardinality of the elliptic curve over Zp', 27)
+    .option('-a, --a [coefficient]', 'The "a" coefficient for the elliptic curve equation', 2) //1
+    .option('-b, --b [coefficient]', 'The "b" coefficient for the elliptic curve equation', 2) //1
+    .option('-g, --generator [point]', 'The generator (starting point) for the elliptic curve', [5, 1]) // [3,10]
+    .option('-p, --prime [number]', 'The prime ensuring the group is finite and limited to Zp', 17) // 23
+    .option('-c, --cardinality [number]', 'The cardinality of the elliptic curve over Zp', 19) // 27
     .option('-u, --username <name>', 'Username to be displayed next to your messages.', 'You')
     .option('-s, --spawn-keys [boolean]', 'Spawn new private and public key', true)
     .option('-f, --file [path]', 'Path to file to send', undefined)
@@ -56,7 +47,7 @@ if (program.spawnKeys || true) {
             "apiKey": random_org_api_key,
             "n": 1,
             "min": 2,
-            "max": 27,
+            "max": 18,
             "replacement": true
         },
         "id": 1
@@ -94,9 +85,10 @@ if (program.spawnKeys || true) {
  * Various event listeners are registered, most notably the 'data' handler which invokes
  * processing of messages.
  */
-
-
 function start_client_or_server() {
+    /**
+     * Server Code
+     */
     if (program.mode === 'server') {
         let messageHandler
 
@@ -105,57 +97,51 @@ function start_client_or_server() {
             messageHandler = new MessageHandler(connection, program);
 
             var stream = connection.pipe(split());
-            stream.on('data',function(data){
-              console.log('message from stream!')
-              if (isJson(data)) {
-                const message = JSON.parse(data);
-                console.log('Unencrypted message: ', message);
+            stream.on('data', function (data) {
+                // console.log('message from stream!')
+                if (isJson(data)) {
+                    const message = JSON.parse(data);
+                    // console.log('Unencrypted message: ', message);
 
-                if (message.type === 'public_key') {
-                    messageHandler.public_key_of_other = message.public_key;
-                    messageHandler.aes_key = EC.generate_symmetric_key(message.public_key, private_key);
-                    console.log(messageHandler.aes_key)
-                    connection.write(JSON.stringify({
-                        type: 'aes_key_established'
-                    })+'\n');
+                    if (message.type === 'public_key') {
+                        messageHandler.public_key_of_other = message.public_key;
+                        console.log('Public Key of Other: ', message.public_key);
+                        messageHandler.aes_key = EC.generate_symmetric_key(message.public_key, private_key);
+                        console.log('Symmetric AES key: ', messageHandler.aes_key)
+                        connection.write(JSON.stringify({
+                            type: 'aes_key_established'
+                        }) + '\n');
 
-                    messageHandler.setup_cipher();
+                        messageHandler.setup_cipher();
 
-                    if (messageHandler.aes_key_established) messageHandler.rl.resume();
-                    return;
-                } else if (message.type === 'aes_key_established') {
-                    messageHandler.aes_key_established = true;
-                    if (messageHandler.aes_key) messageHandler.rl.resume();
-                    return;
+                        if (messageHandler.aes_key_established) messageHandler.rl.prompt();
+                        return;
+                    } else if (message.type === 'aes_key_established') {
+                        messageHandler.aes_key_established = true;
+                        if (messageHandler.aes_key) messageHandler.rl.prompt();
+                        return;
+                    }
+                } else {
+                    if (messageHandler.aes_key_established && messageHandler.aes_key) {
+                        messageHandler.handle_reception_of_message(data)
+                    }
                 }
-              } else {
-                if (messageHandler.aes_key_established && messageHandler.aes_key) {
-                    messageHandler.handle_reception_of_message(data)
-                }
-              }
 
             });
 
             connection.write(JSON.stringify({
-              type: 'public_key',
-              username: program.username,
-              public_key: public_key,
-          })+'\n')
+                type: 'public_key',
+                username: program.username,
+                public_key: public_key,
+            }) + '\n')
 
-          /*
-          connection.on('data', (data) => { // extract ?
-              //console.log('Got message: ', data.toString())
-              
-          })
-          */
+            connection.on('error', (err) => {
+                console.log('Connection error: ', err)
+            })
 
-          connection.on('error', (err) => {
-              console.log('Connection error: ', err)
-          })
-
-          connection.on('end', () => {
-              console.log('client disconnected');
-          });
+            connection.on('end', () => {
+                console.log('client disconnected');
+            });
 
         });
 
@@ -172,7 +158,9 @@ function start_client_or_server() {
 
 
     } else if (program.mode === 'client') {
-
+        /**
+         * Client Code
+         */
         let messageHandler;
 
         const connection = net.createConnection({ port: program.port }, () => {
@@ -183,45 +171,40 @@ function start_client_or_server() {
                 type: 'public_key',
                 username: program.username,
                 public_key: public_key,
-            })+'\n');
+            }) + '\n');
         });
 
         var stream = connection.pipe(split());
-          stream.on('data',function(data){
-            console.log('message from stream!')
+        stream.on('data', function (data) {
+            // console.log('message from stream!')
             if (isJson(data)) {
-              const message = JSON.parse(data);
-              console.log('unencrypted message: ', message)
-              console.log(message)
-              if (message.type === 'public_key') {
-                  messageHandler.public_key_of_other = message.public_key;
-                  messageHandler.aes_key = EC.generate_symmetric_key(message.public_key, private_key);
-                  console.log(messageHandler.aes_key)
-                  connection.write(JSON.stringify({
-                      type: 'aes_key_established'
-                  })+'\n');
+                const message = JSON.parse(data);
+                // console.log('unencrypted message: ', message)
+                if (message.type === 'public_key') {
+                    messageHandler.public_key_of_other = message.public_key;
+                    console.log('Public Key of Other: ', message.public_key);
+                    messageHandler.aes_key = EC.generate_symmetric_key(message.public_key, private_key);
+                    console.log('Symmetric AES key: ', messageHandler.aes_key)
+                    connection.write(JSON.stringify({
+                        type: 'aes_key_established'
+                    }) + '\n');
 
-                  messageHandler.setup_cipher();
+                    messageHandler.setup_cipher();
 
-                  if (messageHandler.aes_key_established) messageHandler.rl.resume();
-              } else if (message.type === 'aes_key_established') {
-                  messageHandler.aes_key_established = true;
+                    if (messageHandler.aes_key_established) messageHandler.rl.prompt();
+                } else if (message.type === 'aes_key_established') {
+                    messageHandler.aes_key_established = true;
 
-                  if (messageHandler.aes_key) messageHandler.rl.resume();
-              }
+                    if (messageHandler.aes_key) messageHandler.rl.prompt();
+                }
             } else {
-              if (messageHandler.aes_key_established && messageHandler.aes_key) {
-                  messageHandler.handle_reception_of_message(data)
-              }
+                if (messageHandler.aes_key_established && messageHandler.aes_key) {
+                    messageHandler.handle_reception_of_message(data)
+                }
             }
 
-          });
-        /*
-        connection.on('data', (data) => {
-            //console.log('Got message: ', data.toString());
-
         });
-        */
+
         connection.on('error', (err) => {
             console.log(err);
             process.exit(1);
@@ -232,14 +215,8 @@ function start_client_or_server() {
         });
 
 
-    } else if (program.mode === 'test') {
-
-        // not in use atm
-
     } else {
         console.log('Only "client" and "server" are valid modes to run the program in');
     }
 }
-
-
 

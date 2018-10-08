@@ -2,40 +2,8 @@ const fs = require('fs');
 
 /**
  * Find the greatest common devisor of two integers
- * http://pages.pacificcoast.net/~cazelais/euclid.html
+ * https://www.w3resource.com/javascript-exercises/javascript-math-exercise-9.php
  */
-function gcd_old (a, b)
-{ 
-    console.log(a, b)
-    if (b == 0) return a
-
-    return gcd(b, a % b)
-}
-
-function gcd_old2 (a, b) {
-    if (a === 0) return b
-    if (b === 0) return a
-    // a = m*q + r
-    const m = a%b
-    const r = a - b
-    return gcd(m, r)
-}
-
-function gcd_forever (a, b) {
-    // b = q*a + r
-    console.log('a, b: ', a, b)
-    var q, r;
-    while (a !== 0) {
-        q = Math.floor(b/a);
-        r = b%a
-
-        a = b
-        b = r
-    }
-    console.log(b)
-    return b
-}
-
 function gcd (a, b) {
     if (typeof a !== 'number' || typeof b !== 'number') {
         return [NaN, NaN, NaN]
@@ -78,50 +46,43 @@ function gcd (a, b) {
   
 
 /**
+ * An implementation of the Extended Euclidean Algorithm
  * Find the gcd also of fractions
  */
 function extendedEuclideanAlgorithm () {
 
-
 }
 
 /**
- * //// Replace modulo_of_fraction...
- * @param {*} a 
- * @param {*} b 
+ * Algorithm to find the modulo of a fraction.
+ * @param {number} numerator 
+ * @param {number} denominator 
+ * @param {number} n 
  */
-function eea (a,b) { 
-    if (b == 0) {
-        return [1, 0, a]
-    } else {
-        temp = xgcd(b, a % b)
-        x = temp[0]
-        y = temp[1]
-        d = temp[2]
-        return [y, x-y*Math.floor(a/b), d]
-    }
-}
-
 function modulo_of_fraction (numerator, denominator, n) {
-    console.log('modulo of fraction: ', numerator, denominator, n)
+    // console.log('modulo of fraction: ', numerator, denominator, n)
+    if (denominator === 0) return 0;
+
     for (let t = 1; t <= n; t++) {
         if (mod(t*denominator, n) === mod(numerator, n)) return t
     }
-
     return 'failed';
 }
 
 /**
  * Computes x modulo n, also for negative numbers, as the '%' operator in JavaScript is not an implementation
  * of the mathematical operation known as modulo.
+ * https://dev.to/maurobringolf/a-neat-trick-to-compute-modulo-of-negative-numbers-111e
  * @param {number} x 
  * @param {number} n 
  */
 const mod = (x, n) => (x % n + n) % n
 
-// https://dev.to/maurobringolf/a-neat-trick-to-compute-modulo-of-negative-numbers-111e
-
-
+/**
+ * Store key pair to file
+ * @param {number} private_key 
+ * @param {array} public_key 
+ */
 function store_keys(private_key, public_key) {
     const keys = {
         private_key: private_key,
@@ -135,6 +96,9 @@ function store_keys(private_key, public_key) {
     }
 }
 
+/**
+ * Get key pair from file
+ */
 function get_keys() {
     try {
         const data = fs.readFileSync('./keys.txt');
@@ -146,6 +110,10 @@ function get_keys() {
     }
 }
 
+/**
+ * Check if string is valid JSON
+ * @param {string} str 
+ */
 function isJson(str) {
     try {
         JSON.parse(str);

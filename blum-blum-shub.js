@@ -1,19 +1,16 @@
-const { gcd, mod } = require('./helpers')
+const { mod } = require('./helpers')
 
+/**
+ * Implementation of the Blum Blum Shub algorithm.
+ * Requirements: p and q are primes
+ *               p mod 4 = q mod 4 = 3
+ *               seed and p*q are relatively prime
+ * @param {number} p 
+ * @param {number} q 
+ * @param {number} seed 
+ */
 module.exports  = function blum_blum_shub (p, q, seed) {
-    // need to make the seed relative prime to n = p*q
-    // if gcd(n, p*q) is 1, then they are relatively prime
     const n = p*q;
-    let greatestCommonDevisor = gcd(seed, n);
-    
-    while (greatestCommonDevisor !== 1) {
-        seed++
-        greatestCommonDevisor = gcd(seed, n);
-    }
-
-    console.log(greatestCommonDevisor, seed)
-
-    // BBS algorithm
     const X = [];
     const B = [];
     X[0] = mod(Math.pow(seed, 2), n);
@@ -23,8 +20,4 @@ module.exports  = function blum_blum_shub (p, q, seed) {
     }
 
     return B
-}
-
-function is_prime () {
-    
 }

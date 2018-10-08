@@ -2,67 +2,91 @@ const blum_blum_shub = require('./blum-blum-shub')
 const { modulo_of_fraction } = require('./helpers');
 const EllipticCurve = require('./elliptic-curve')
 
-const bbs_test = blum_blum_shub(383, 503, 192649); // seed is n, gives seed of 192650, which has gcd of 1 with n. Gives: 11111111...
-console.log(bbs_test.join(''))
-console.log(bbs_test.join('').length)
-console.log(parseInt(bbs_test.join(''), 2))
-
-const bbs_test2 = blum_blum_shub(383, 503, 385298); // the seed used is the same as the test above, just 192649 (n) higher. Gives: 11111111...
-console.log(bbs_test2.join(''))
-console.log(bbs_test2.join('').length)
-console.log(parseInt(bbs_test2.join(''), 2))
-
-
-const bbs_test3 = blum_blum_shub(383, 503, 1712345642);
-console.log(bbs_test3.join(''))
-console.log(bbs_test3.join('').length)
-console.log(parseInt(bbs_test3.join(''), 2))
+/**
+ * Modulo of fraction test
+ */
 
 
 
-const bbs_test4 = blum_blum_shub(383, 503, 12);
-console.log(bbs_test4.join(''))
-console.log(bbs_test4.join('').length)
-console.log(parseInt(bbs_test4.join(''), 2))
+/**
+ * Blum Blum Shub Tests
+ */
+console.log('Blum Blum Shub tests:')
+const tests  = [
+    [383, 503, 192649], // seed is n, gives seed of 192650, which has gcd of 1 with n. Gives: 11111111...
+    [383, 503, 385298], // the seed used is the same as the test above, just 192649 (n) higher. Gives: 11111111...
+    [383, 503, 1712345642],
+    [383, 503, 12],
+    [383, 503, 104],
+    [383, 503, 137],
+    [383, 503, 31],
+].forEach(test => {
+    console.log(test)
+    console.log(blum_blum_shub(...test).join('')+'\n')
+})
 
 
-const bbs_test5 = blum_blum_shub(383, 503, 104);
-console.log(bbs_test5.join(''))
-console.log(bbs_test5.join('').length)
-console.log(parseInt(bbs_test5.join(''), 2))
+
+var EC = new EllipticCurve(2, 2, [5, 1], 17, 19); 
+// Alternative parameters to EllipticCurve constructor:
+// 2,3,[3,6], 97,5
+// 1, 1, [0, 1], 23, 27 (groupMembers hold the points of this curve)
+
+const groupMembers2 = [ // a=2, b=2, p=17, G=[5,1] or some other point in the set
+    [ 5, 1 ], // P
+    [ 6, 14 ],
+    [ 5, 16 ], // 18P
+    [ 16, 13 ],
+    [ 0, 6 ],
+    [ 13, 7 ],
+    [ 7, 6 ],
+    [ 7, 11 ],
+    [ 13, 10 ],
+    [ 6, 3 ],
+    [ 10, 6 ],
+    [ 3, 1 ],
+    [ 9, 16 ],
+    [ 0, 11 ],
+    [ 16, 4 ],
+    [ 9, 1 ],
+    [ 3, 16 ],
+    [ 10, 11 ],
+    // the 19th element is the point at infinity
+]
 
 
-// CLEAN THIS UP, ALL CRYPTO FUNCTIONS SHOULD BE TESTED/DEMONSTRATED HERE!
+results = []
+let errorMessages = [];
 
-var EC = new EllipticCurve(1, 1, [0, 1], 23, 27); // 2,3,[3,6], 97,5
-var EC2 = new EllipticCurve(2,3,[3,6], 97,5); // 2,3,[3,6], 97,5
+groupMembers2.forEach(member => {
+    for (let i = 2; i <= 18; i++) {
+        const result = EC.point_multiplication(member, i);
+        results.push([member, i , result]);
 
-console.log(modulo_of_fraction(-3,6,23))
+        let found = false
 
-console.log('----Add [3,10] and [9,7]: ', EC.point_add([3,10], [9,7]))
+        for (let i = 0; i < groupMembers2.length; i++) {
+            if ((groupMembers2[i][0] === result[0]) && (groupMembers2[i][1] === result[1])) {
+                found = true;
+            }
+        }
 
-console.log('----Double [9,7]: ', EC.point_double([3,10]))
+        if (found === false) {
+            errorMessages.push('Using generator: ' + member + ' and multiplier: ' + i + ' the result: ' + result + ' is not a group member');
+        }
+    }
+})
 
-
-/*
-for (let i = 0; i <= 50; i++) {
-    console.log(EC.point_multiplication([0, 1], i))
+console.log(results);
+console.log(errorMessages);
+if (errorMessages.length < 1) {
+    console.log(`Only group members was derived when doing point multiplication: c*P, where;
+c is some multiplier with value less then cardinality of the set E(a, b) mod p, and
+P is a point in the set E(a, b) mod p `)
 }
 
-for (let i = 0; i <= 15; i++) {
-    
-    //console.log(EC2.point_multiplication([3, 10], i))
-    console.log(EC.point_multiplication([9, 16], i))
-}
 
-
-console.log(EC.point_multiplication([5, 4], 9))
-console.log(EC.point_multiplication([0,1], 12))
-*/
-console.log(EC.point_multiplication([ 11, 20 ], 4))
-
-
-const groupMembers = [
+const groupMembers = [ // a=1, b=1, p=23, cardinality=28, G=[3,10] or some other point in the set
     [0,1], 
     [0,22], 
     [1,7], 
@@ -71,7 +95,6 @@ const groupMembers = [
     [3,13], 
     [4, 0],
     [5, 4],
-    [5, 19],
     [5, 19],
     [6, 4],
     [6, 19],
@@ -91,17 +114,5 @@ const groupMembers = [
     [18, 20],
     [19, 5],
     [19, 18]
+    // Point at infinity is not included
 ]
-
-/*
-groupMembers.forEach(member => {
-    for (let i = 2; i <= 23; i++) {
-        const result = EC.point_multiplication(member, i)
-        console.log(member, i , result)
-        if (groupMembers.find((el) => { return ((el[0] === result[0]) && (el[1] === result[1])) }) === -1) {
-            console.log('Using generator: ' + member + ' and multiplier: ' + i + ' the result: ' + result + ' is not a group member')
-        }
-    }
-})
-
-*/

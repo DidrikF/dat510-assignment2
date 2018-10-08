@@ -19,10 +19,8 @@ module.exports = class MessageHandler {
             prompt: program.username + "> "
         })
 
-        // this.rl.pause();
-
         this.rl.on('line', (line) => {
-            console.log('Got line: ', line)
+            // console.log('Got line: ', line)
             switch (line.trim()) {
                 case '.exit':
                     rl.close();
@@ -31,38 +29,41 @@ module.exports = class MessageHandler {
                     break;
                 case '.new_keys':
                     // initiate new key exchange
-
+                    console.log('Not implemented, sorry')
                     break;
                 case '.print_keys':
-
+                    console.log('AES Key: ', this.aes_key);
+                    console.log('Public Key of other: ', this.public_key_of_other)
 
                     break;
                 case '.help':
-
+                    console.log('.exit => Exit program')
+                    console.log('.new_keys => Run ECDH and establish new AES key')
+                    console.log('.print_keys => Print AES key and public key of other')
+                    console.log('.help => Print help')
+                    console.log('.file ./path/to/file.txt => Send encrypted file')
+                    console.log('Some message text => Send encrypted message')
                     break;
                 default:
-                    // send message
                     this.handle_sending_of_message(line)
-
                     break;
             }
             this.rl.prompt();
         }).on('resume', () => {
             this.rl.prompt();
         }).on('close', () => {
-            console.log('Have a great day!');
+            console.log('Exiting...\nHave a great day!');
             process.exit(0);
         });
     }
 
     handle_sending_of_message (line) {
-        console.log('Handling sending with line: ', line)
+        // console.log('Handling sending with line: ', line)
         if (!this.aes_key || !this.aes_key_established) {
             console.log('Cannot send message when aes_keys are not established.')
             return;
         }
         const parsed = RegExp(/^(\.\w+) (.*)$/).exec(line) || [];
-        // console.log(parsed)
         let command = 'none';
         let filePath = '';
         if (parsed.length > 1) {
@@ -71,7 +72,6 @@ module.exports = class MessageHandler {
                 filePath = parsed[2]
             }
         }
-        // console.log('Command: ', command, 'File path: ', filePath)
 
         const message = {
             username: this.program.username,
@@ -79,12 +79,10 @@ module.exports = class MessageHandler {
 
         switch (command) {
             case '.file':
-                console.log('Encrypting and sending file with name: ', filePath);
-                
                 try {
-                    const file = fs.readFileSync(filePath);
+                    const file = fs.readFileSync(filePath)
                     message.type = 'file';
-                    message.file = file;
+                    message.file = file
                     const pathElements = filePath.split('/');
                     message.fileName = pathElements[pathElements.length - 1];
                 } catch (error) {
@@ -94,7 +92,6 @@ module.exports = class MessageHandler {
 
                 break;
             default:
-                console.log('Encrypting and sending line: ', line)
                 message.type = 'text';
                 message.text  = line;
                 break;
@@ -107,14 +104,20 @@ module.exports = class MessageHandler {
     handle_reception_of_message (data) {
         const message = this.decrypt_message(data);
         if (message === null) return;
-        console.log('Handle reception of message: ', message)
-
+        // console.log('Handle reception of message: ', message)
         switch (message.type) {
             case 'file':
-
+                console.log('\n'+message.username+'> '+ 'Got file with name: ' + message.fileName);
+                console.log('Saving to ./files');
+                try {
+                    const file = Buffer.from(message.file.data);
+                    fs.writeFileSync('./files/'+message.fileName, file);
+                } catch (error) {
+                    console.log('Failed to write file to file system with error: ', error)
+                }
                 break;
             case 'text':
-    
+                console.log('\n'+message.username+'> '+message.text);
                 break;
             default:
                 console.log('Received unknown message type: ', message.type)
@@ -125,10 +128,9 @@ module.exports = class MessageHandler {
 
     encrypt_and_send_message (message) {
         this.setup_cipher()
-        console.log('Encrypting and sending message: ', message)
+        // console.log('Encrypting and sending message: ', message)
         let encrypted;
         try {
-            //encrypted = Buffer.concat([Buffer.from(this.cipher.update(JSON.stringify(message)), "utf8", 'hex'), Buffer.from(this.cipher.final('hex'))]);
             encrypted = this.cipher.update(JSON.stringify(message), 'utf8', 'hex');
             encrypted += this.cipher.final('hex');
         } catch (error) {
@@ -137,12 +139,6 @@ module.exports = class MessageHandler {
         }
         console.log('Encrypted message to send: ', encrypted);
 
-
-        //const decrypted = Buffer.concat([Buffer.from(this.decipher.update(encrypted, 'hex', 'utf8')), Buffer.from(this.decipher.final('utf8'))]);
-        //let decrypted = this.decipher.update(encrypted, 'hex', 'utf8');
-        //decrypted += this.decipher.final('utf8');
-        
-        //console.log('Decrypted: ', decrypted)
         try {
 
             this.connection.write(encrypted);
@@ -155,10 +151,9 @@ module.exports = class MessageHandler {
     decrypt_message (data) {
         this.setup_cipher();
         if (isJson(data)) return JSON.parse(data);
-        console.log('Decrypting data: ', data)
+        // console.log('Decrypting data: ', data)
         let decrypted;
         try {
-            //decrypted = Buffer.concat([Buffer.from(this.decipher.update(data, 'hex', 'utf8')), Buffer.from(this.decipher.final('utf8'))]);
             decrypted = this.decipher.update(data, 'hex', 'utf8');
             decrypted += this.decipher.final('utf8');
         } catch (error) {
@@ -174,9 +169,5 @@ module.exports = class MessageHandler {
         this.decipher = crypto.createDecipher('aes128', this.aes_key);
     }
 
-
-
 }
-
-
 
