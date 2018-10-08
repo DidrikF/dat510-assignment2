@@ -19,6 +19,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "commander": "^2.18.0",
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.11",
+    "split": "^1.0.1"
   }
 }

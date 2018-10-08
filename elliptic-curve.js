@@ -55,14 +55,14 @@ module.exports = class EllipticCurve {
             // DONT KNOW WHAT TO DO HERE
             return 0;
         }
-        // console.log(Xp, Yp, Xq, Yq)
+        console.log(Xp, Yp, Xq, Yq)
         const delta = modulo_of_fraction((Yp-Yq),(Xp-Xq), this.p);
-        // console.log('Modulo of fraction (slope): ', delta)
+        console.log('Modulo of fraction (slope): ', delta)
         let Xr = Math.pow(delta, 2) - Xp - Xq;
         let Yr = delta*(Xp - Xr) - Yp;
         Xr = mod(Xr, this.p)
         Yr = mod(Yr, this.p)
-        // console.log('Added: ', Xr, Yr)
+        console.log('Added: ', Xr, Yr)
         return [Xr, Yr];
     }
 
@@ -70,12 +70,12 @@ module.exports = class EllipticCurve {
     point_double (P) {
         const [Xp, Yp] = P;
         const delta = modulo_of_fraction((3*Math.pow(Xp, 2) + this.a), (2*Yp), this.p);
-        // console.log('Modulo of fraction (slope): ', delta)
+        console.log('Modulo of fraction (slope): ', delta)
         let Xr = Math.pow(delta, 2) - 2*Xp
         let Yr = delta*(Xp - Xr) - Yp;
         Xr = mod(Xr, this.p)
         Yr = mod(Yr, this.p)
-        // console.log('Doubled: ', Xr, Yr)
+        console.log('Doubled: ', Xr, Yr)
         return [Xr, Yr];
     }
     

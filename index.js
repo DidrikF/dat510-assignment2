@@ -2,9 +2,10 @@ const net = require('net');
 
 const program = require('commander');
 const axios = require('axios');
+const split = require('split');
 
 const EllipticCurve = require('./elliptic-curve');
-const { modulo_of_fraction, store_keys, get_keys, isJson } = require('./helpers');
+const { store_keys, get_keys, isJson } = require('./helpers');
 const MessageHandler = require('./MessageHandler');
 
 
@@ -31,7 +32,7 @@ program
     .option('-g, --generator [point]', 'The generator (starting point) for the elliptic curve', [3, 10])
     .option('-p, --prime [number]', 'The prime ensuring the group is finite and limited to Zp', 23)
     .option('-c, --cardinality [number]', 'The cardinality of the elliptic curve over Zp', 27)
-    .option('-u, --username <name>', 'Username to be displayed next to your messages.')
+    .option('-u, --username <name>', 'Username to be displayed next to your messages.', 'You')
     .option('-s, --spawn-keys [boolean]', 'Spawn new private and public key', true)
     .option('-f, --file [path]', 'Path to file to send', undefined)
     .parse(process.argv);
@@ -103,44 +104,58 @@ function start_client_or_server() {
             console.log('client connected');
             messageHandler = new MessageHandler(connection, program);
 
-            connection.write(JSON.stringify({
-                type: 'public_key',
-                username: program.username,
-                public_key: public_key,
-            }))
+            var stream = connection.pipe(split());
+            stream.on('data',function(data){
+              console.log('message from stream!')
+              if (isJson(data)) {
+                const message = JSON.parse(data);
+                console.log('Unencrypted message: ', message);
 
-            connection.on('data', (data) => {
-                // console.log(data.toString())
-                if (isJson(data)) {
-                    const message = JSON.parse(data);
+                if (message.type === 'public_key') {
+                    messageHandler.public_key_of_other = message.public_key;
+                    messageHandler.aes_key = EC.generate_symmetric_key(message.public_key, private_key);
+                    console.log(messageHandler.aes_key)
+                    connection.write(JSON.stringify({
+                        type: 'aes_key_established'
+                    })+'\n');
 
-                    if (message.type === 'public_key') {
-                        messageHandler.public_key_of_other = message.public_key;
-                        messageHandler.aes_key = EC.generate_symmetric_key(message.public_key, private_key);
-                        console.log(messageHandler.aes_key)
-                        connection.write(JSON.stringify({
-                            type: 'aes_key_established'
-                        }));
-                        if (messageHandler.aes_key_established) messageHandler.rl.resume();
-                    } else if (message.type === 'aes_key_established') {
-                        messageHandler.aes_key_established = true;
-                        if (messageHandler.aes_key) messageHandler.rl.resume();
-                    }
+                    messageHandler.setup_cipher();
+
+                    if (messageHandler.aes_key_established) messageHandler.rl.resume();
+                    return;
+                } else if (message.type === 'aes_key_established') {
+                    messageHandler.aes_key_established = true;
+                    if (messageHandler.aes_key) messageHandler.rl.resume();
+                    return;
                 }
-
+              } else {
                 if (messageHandler.aes_key_established && messageHandler.aes_key) {
                     messageHandler.handle_reception_of_message(data)
                 }
+              }
 
-            })
-
-            connection.on('error', (err) => {
-                console.log('Connection error: ', err)
-            })
-
-            connection.on('end', () => {
-                console.log('client disconnected');
             });
+
+            connection.write(JSON.stringify({
+              type: 'public_key',
+              username: program.username,
+              public_key: public_key,
+          })+'\n')
+
+          /*
+          connection.on('data', (data) => { // extract ?
+              //console.log('Got message: ', data.toString())
+              
+          })
+          */
+
+          connection.on('error', (err) => {
+              console.log('Connection error: ', err)
+          })
+
+          connection.on('end', () => {
+              console.log('client disconnected');
+          });
 
         });
 
@@ -168,39 +183,45 @@ function start_client_or_server() {
                 type: 'public_key',
                 username: program.username,
                 public_key: public_key,
-            }));
+            })+'\n');
         });
 
-        connection.on('data', (data) => {
-            // console.log(data.toString());
-
+        var stream = connection.pipe(split());
+          stream.on('data',function(data){
+            console.log('message from stream!')
             if (isJson(data)) {
-                const message = JSON.parse(data);
-                console.log(message)
-                if (message.type === 'public_key') {
-                    messageHandler.public_key_of_other = message.public_key;
-                    messageHandler.aes_key = EC.generate_symmetric_key(message.public_key, private_key);
-                    console.log(messageHandler.aes_key)
-                    connection.write(JSON.stringify({
-                        type: 'aes_key_established'
-                    }));
+              const message = JSON.parse(data);
+              console.log('unencrypted message: ', message)
+              console.log(message)
+              if (message.type === 'public_key') {
+                  messageHandler.public_key_of_other = message.public_key;
+                  messageHandler.aes_key = EC.generate_symmetric_key(message.public_key, private_key);
+                  console.log(messageHandler.aes_key)
+                  connection.write(JSON.stringify({
+                      type: 'aes_key_established'
+                  })+'\n');
 
-                    if (messageHandler.aes_key_established) messageHandler.rl.resume();
-                } else if (message.type === 'aes_key_established') {
-                    messageHandler.aes_key_established = true;
+                  messageHandler.setup_cipher();
 
-                    if (messageHandler.aes_key) messageHandler.rl.resume();
-                }
+                  if (messageHandler.aes_key_established) messageHandler.rl.resume();
+              } else if (message.type === 'aes_key_established') {
+                  messageHandler.aes_key_established = true;
+
+                  if (messageHandler.aes_key) messageHandler.rl.resume();
+              }
+            } else {
+              if (messageHandler.aes_key_established && messageHandler.aes_key) {
+                  messageHandler.handle_reception_of_message(data)
+              }
             }
 
-            
+          });
+        /*
+        connection.on('data', (data) => {
+            //console.log('Got message: ', data.toString());
 
-            if (messageHandler.aes_key_established && messageHandler.aes_key) {
-                messageHandler.handle_reception_of_message(data)
-            }
-            
         });
-
+        */
         connection.on('error', (err) => {
             console.log(err);
             process.exit(1);
