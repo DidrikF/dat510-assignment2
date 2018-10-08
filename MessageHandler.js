@@ -23,7 +23,7 @@ module.exports = class MessageHandler {
             // console.log('Got line: ', line)
             switch (line.trim()) {
                 case '.exit':
-                    rl.close();
+                    this.rl.close();
                     console.log('Bye, bye, exiting the process.')
                     process.exit(0)
                     break;

@@ -152,7 +152,7 @@ function start_client_or_server() {
             process.exit(1);
         });
 
-        server.listen(program.port, () => {
+        server.listen(program.port, program.ip, () => {
             console.log('server bound to port: ', program.port);
         });
 
@@ -163,7 +163,7 @@ function start_client_or_server() {
          */
         let messageHandler;
 
-        const connection = net.createConnection({ port: program.port }, () => {
+        const connection = net.createConnection({ port: program.port, host: program.ip }, () => {
             console.log('connected to server on port: ', program.port);
             messageHandler = new MessageHandler(connection, program)
 
