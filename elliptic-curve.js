@@ -35,7 +35,7 @@ module.exports = class EllipticCurve {
             greatestCommonDevisor = gcd(seed, n);
         }
         //console.log(greatestCommonDevisor, seed)
-        console.log('Parameters to blum blum shub (p, q, seed): ', p, q, seed, typeof seed)
+        console.log('Parameters to blum blum shub (p, q, seed): ', p, q, seed)
         const bits = blum_blum_shub(p, q, seed);
         return bits.join('');
     }

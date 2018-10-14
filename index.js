@@ -25,8 +25,19 @@ program
     .option('-c, --cardinality [number]', 'The cardinality of the elliptic curve over Zp', 19) // 27
     .option('-u, --username <name>', 'Username to be displayed next to your messages.', 'You')
     .option('-s, --spawn-keys [boolean]', 'Spawn new private and public key', true)
-    .option('-f, --file [path]', 'Path to file to send', undefined)
     .parse(process.argv);
+
+/**
+ * Given command line options and default values, the parameters of the elliptic curve is given. The Elliptic
+ * curve together with a generator (start point on the curve), the modulus operation with some prime p and the 
+ * point addition operation, produces a cyclic group.
+ * These public parameters are printed to the console.
+ */
+console.log('Public Parameters:');
+console.log(`Elliptic Curve: y^2 = x^3 ${program.a}x + ${program.b}`);
+console.log(`Generator: ${program.generator}`);
+console.log(`Prime: ${program.prime}`);
+console.log(`Curve cardinality: ${program.cardinality}\n`);
 
 
 /**
@@ -34,7 +45,7 @@ program
  * and then calculate a public key, or the previously generated keys are loaded from a file.
  */
 
-if (program.spawnKeys || true) {
+if (program.spawnKeys) {
     var EC = new EllipticCurve(program.a, program.b, program.generator, program.prime, program.cardinality); // 2,3,[3,6], 97,5
     var private_key = null;
     var public_key = null;
