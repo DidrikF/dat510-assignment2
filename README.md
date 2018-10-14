@@ -1,6 +1,6 @@
-# dat510-assignment2
+# dat510-assignment2 - Cryptosystem
 
-## Implementing crypto system involving Elliptic Curve Diffie-Hellman key exchage, a Blum Blum Shub CSPSRN and AES to send encrypted messages between client and server
+## Implementing cryptosystem involving Elliptic Curve Diffie-Hellman key exchage, a Blum Blum Shub CSPSRN and AES to send encrypted messages between client and server
 
 ### The contents of the directory
 
@@ -43,6 +43,22 @@ Your should now be ready to run the code.
 ### About the program
 
 The program is implements Elliptic Curve Diffie-Hellman (ECDF) and Blum Blum Shub CSPRNG to produce a symmetric key to be used with AES to encrypt both files and messages. The program is a command line chat application, where you either start in client or server mode. The server must be started first, otherwise the client will not be able to connect. When you run the program various command line options can be passed to define the inner workings of the program. You can define all public parameters used in the ECDH key exchange, the port and IP you want to bind/connect to, the username we want to appear in the chat with as well as whether or not to create new public/private keys or load old ones from a file.
+
+Command line options:
+```
+  -V, --version               output the version number
+  -i, --ip [ip_address]       The ip address to connect to or bind the server to. (default: localhost)
+  -o, --port [number]         Port to listen on, or connect to (default: 3000)
+  -m, --mode [type]           Start in client or server mode (default: server)
+  -a, --a [coefficient]       The "a" coefficient for the elliptic curve equation (default: 2)
+  -b, --b [coefficient]       The "b" coefficient for the elliptic curve equation (default: 2)
+  -g, --generator [point]     The generator (starting point) for the elliptic curve (default: 5,1)
+  -p, --prime [number]        The prime ensuring the group is finite and limited to Zp (default: 17)
+  -c, --cardinality [number]  The cardinality of the elliptic curve over Zp (default: 19)
+  -u, --username <name>       Username to be displayed next to your messages. (default: You)
+  -s, --spawn-keys [boolean]  Spawn new private and public key (default: true)
+  -h, --help                  output usage information
+```
 
 Once a symmetric key is successfully established, the users can send messages and files encrypted with AES to one another. You send a file by writing `.file ./path/to/file.txt`, where `.file` is a command that is parsed and recognized by the program. There are other commands as well. Write `.help` to list them. To send a message; simply type your message and press enter.
 
