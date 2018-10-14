@@ -86,6 +86,7 @@ P is a point in the set E(a, b) mod p `)
 }
 
 
+
 const groupMembers = [ // a=1, b=1, p=23, cardinality=28, G=[3,10] or some other point in the set
     [0,1], 
     [0,22], 
@@ -116,3 +117,34 @@ const groupMembers = [ // a=1, b=1, p=23, cardinality=28, G=[3,10] or some other
     [19, 18]
     // Point at infinity is not included
 ]
+
+var EC2 = new EllipticCurve(1, 1, [0, 1], 23, 27); 
+results = []
+errorMessages = []
+
+groupMembers.forEach(member => {
+    for (let i = 2; i <= 18; i++) {
+        const result = EC2.point_multiplication(member, i);
+        results.push([member, i , result]);
+
+        let found = false
+
+        for (let i = 0; i < groupMembers.length; i++) {
+            if ((groupMembers[i][0] === result[0]) && (groupMembers[i][1] === result[1])) {
+                found = true;
+            }
+        }
+
+        if (found === false) {
+            errorMessages.push('Using generator: ' + member + ' and multiplier: ' + i + ' the result: ' + result + ' is not a group member');
+        }
+    }
+})
+
+console.log(results);
+console.log(errorMessages);
+if (errorMessages.length < 1) {
+    console.log(`Only group members was derived when doing point multiplication: c*P, where;
+c is some multiplier with value less then cardinality of the set E(a, b) mod p, and
+P is a point in the set E(a, b) mod p `)
+}

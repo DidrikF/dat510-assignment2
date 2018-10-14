@@ -62,6 +62,16 @@ Command line options:
 
 Once a symmetric key is successfully established, the users can send messages and files encrypted with AES to one another. You send a file by writing `.file ./path/to/file.txt`, where `.file` is a command that is parsed and recognized by the program. There are other commands as well. Write `.help` to list them. To send a message; simply type your message and press enter.
 
+Program commands:
+```
+.exit                       => Exit program
+.new_keys                   => Run ECDH and establish new AES key
+.print_keys                 => Print AES key and public key of other
+.help                       => Print help
+.file ./path/to/file.txt    => Send encrypted file
+Some message text (enter)   => Send encrypted message
+```
+
 ### Running the code
 The easiest way to get going is explained here. There are hard coded default values for the parameters needed to perform the ECDH key exchange, so the user is not required to provide them. The server and client is bound/connects to localhost on port 3000 by default.
 

@@ -9,7 +9,8 @@ module.exports = class EllipticCurve {
         this.b = b;
         this.G = G;
         this.p = p;
-        this.cardinality = cardinality
+        this.cardinality = cardinality;
+        this.currentG = null;
     }
     /**
      * Generate a symmetric AES key from the other party's public key and your private key.
@@ -65,6 +66,8 @@ module.exports = class EllipticCurve {
         } else if (n % 2 === 1) {
             return this.point_add(G, this.point_multiplication(G, n-1)) // Add when n is odd
         } else {
+            if (this.isPointAtInfinity(G)) return this.point_multiplication(this.currentG, n-1)
+            
             return this.point_multiplication(this.point_double(G), n/2) 
         }
     }
@@ -78,19 +81,11 @@ module.exports = class EllipticCurve {
         const [Xp, Yp] = P;
         const [Xq, Yq] = Q;
 
-        // NOT SURE HOW TO DEAL WITH POINT AT INFINITY!
-        if (Yp === Infinity && Yq === Infinity) {
+        if (this.isInverse(P, Q)) {
             return [0, Infinity];
         }
-        if (Yp === Infinity) {
-            return Q;
-        }
-        if (Yq === Infinity) {
-            return P;
-        }
-        if ((Xp === Xq) && (Yp === -Yq)) {
-            return [0, Infinity]
-        }
+
+
         // console.log(Xp, Yp, Xq, Yq)
         const delta = modulo_of_fraction((Yp-Yq),(Xp-Xq), this.p);
         // console.log('Modulo of fraction (slope): ', delta)
@@ -110,10 +105,12 @@ module.exports = class EllipticCurve {
     point_double (P) {
         const [Xp, Yp] = P;
 
-        // NOT SURE HOW TO DEAL WITH POINT AT INFINITY!
-        if (Yp === Infinity) {
-            return [0, Infinity];
+        /*
+        if(isPointAtInfinity(P)) {
+            return this.point_add(P, this.currentG);
         }
+        */
+
         if (Yp === 0) {
             return [0, Infinity];
         }
@@ -127,6 +124,16 @@ module.exports = class EllipticCurve {
         Yr = mod(Yr, this.p)
         // console.log('Doubled: ', Xr, Yr)
         return [Xr, Yr];
+    }
+
+    isPointAtInfinity (P) {
+        if ((P[1] === Infinity) || (P[1] === -Infinity)) return true;
+        return false;
+    }
+
+    isInverse (P, Q) {
+        if ((P[0] === Q[0]) && (P[1] !== Q[1])) return true;
+        return false
     }
     
 }
