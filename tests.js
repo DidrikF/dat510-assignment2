@@ -14,7 +14,7 @@ console.log(`-3/6 mod 23 is expected to be 11 and was calculated to be: ${modulo
 console.log('Blum Blum Shub tests:')
 const tests  = [
     [383, 503, 192649], // seed is n, gives seed of 192650, which has gcd of 1 with n. Gives: 11111111...
-    [383, 503, 385298], // the seed used is the same as the test above, just 192649 (n) higher. Gives: 11111111...
+    [383, 503, 385298], // the seed used is the same as the test above, just 192649 (n) higher. Gives: 000000...
     [383, 503, 1712345642],
     [383, 503, 12],
     [383, 503, 104],
@@ -28,7 +28,7 @@ const tests  = [
 
 
 const groupMembers = [ // a=1, b=1, p=23, cardinality=28, G=[3,10] or some other point in the set
-    [5, 4], // Gave cyclic group with lower cardinality, the code produced points that cycled around ofter 5 steps.
+    [5, 4], // Gave cyclic group with lower cardinality, the code produced points that cycled around after 5 steps.
     [0,1], 
     [0,22], 
     [1,7], 
@@ -36,7 +36,6 @@ const groupMembers = [ // a=1, b=1, p=23, cardinality=28, G=[3,10] or some other
     [3,10], 
     [3,13], 
     [4, 0],
-    //[5, 4],
     [5, 19], // Inverse of the above
     [6, 4],
     [6, 19], // inverse of the above
@@ -57,8 +56,7 @@ const groupMembers = [ // a=1, b=1, p=23, cardinality=28, G=[3,10] or some other
     [19, 5],
     [19, 18],
     [0, Infinity]
-    // Point at infinity is not included
-]
+];
 
 const groupMembers2 = [ // a=2, b=2, p=17, G=[5,1] or some other point in the set
     [ 5, 1 ], // if [5,1] is P
@@ -81,7 +79,7 @@ const groupMembers2 = [ // a=2, b=2, p=17, G=[5,1] or some other point in the se
     [ 10, 11 ],
     [0, Infinity]
     // the 19th element is the point at infinity
-]
+];
 
 var EC = new EllipticCurve(2, 2, [5, 1], 17, 19); 
 // Alternative parameters to EllipticCurve constructor:
@@ -91,7 +89,6 @@ var EC = new EllipticCurve(2, 2, [5, 1], 17, 19);
 
 results = []
 let errorMessages = [];
-
 
 groupMembers2.forEach(member => {
     for (let i = 2; i <= groupMembers2.length*2; i++) {
@@ -159,10 +156,10 @@ P is a point in the set E(a, b) mod p `)
 
 //_________
 var EC2 = new EllipticCurve(1, 1, [0, 1], 23, 27); 
-results = []
-errorMessages = []
+results = [];
+errorMessages = [];
 
-const point = [0, 1]// [0, 1];
+const point = [0, 1];
 const n = 13;
 
 EC2.currentG = point

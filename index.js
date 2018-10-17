@@ -49,7 +49,7 @@ var private_key = null;
 var public_key = null;
 
 if (program.spawnKeys) {
-    var EC = new EllipticCurve(program.a, program.b, program.generator, program.prime, program.cardinality); // 2,3,[3,6], 97,5
+    var EC = new EllipticCurve(program.a, program.b, program.generator, program.prime, program.cardinality);
 
     // True random source to generate private key:
     axios.post('https://api.random.org/json-rpc/1/invoke', {
@@ -74,12 +74,11 @@ if (program.spawnKeys) {
 
         start_client_or_server();
 
-    })
-        .catch(error => {
-            // console.log('Failed to get true random number for private key');
-            console.log(error);
-
-        });
+    }).catch(error => {
+        console.log('Failed to get true random number for private key');
+        console.log(error);
+        process.exit(1);
+    });
 
 } else {
     const keys = get_keys()
@@ -110,10 +109,8 @@ function start_client_or_server() {
 
             var stream = connection.pipe(split());
             stream.on('data', function (data) {
-                // console.log('message from stream!')
                 if (isJson(data)) {
                     const message = JSON.parse(data);
-                    // console.log('Unencrypted message: ', message);
 
                     if (message.type === 'public_key') {
                         messageHandler.public_key_of_other = message.public_key;
@@ -138,7 +135,6 @@ function start_client_or_server() {
                         messageHandler.handle_reception_of_message(data)
                     }
                 }
-
             });
 
             connection.write(JSON.stringify({
@@ -188,10 +184,8 @@ function start_client_or_server() {
 
         var stream = connection.pipe(split());
         stream.on('data', function (data) {
-            // console.log('message from stream!')
             if (isJson(data)) {
                 const message = JSON.parse(data);
-                // console.log('unencrypted message: ', message)
                 if (message.type === 'public_key') {
                     messageHandler.public_key_of_other = message.public_key;
                     console.log('Public Key of Other: ', message.public_key);
@@ -214,7 +208,6 @@ function start_client_or_server() {
                     messageHandler.handle_reception_of_message(data)
                 }
             }
-
         });
 
         connection.on('error', (err) => {
@@ -225,7 +218,6 @@ function start_client_or_server() {
         connection.on('end', () => {
             console.log('disconnected from server');
         });
-
 
     } else {
         console.log('Only "client" and "server" are valid modes to run the program in');

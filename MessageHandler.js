@@ -20,7 +20,6 @@ module.exports = class MessageHandler {
         })
 
         this.rl.on('line', (line) => {
-            // console.log('Got line: ', line)
             switch (line.trim()) {
                 case '.exit':
                     this.rl.close();
@@ -58,7 +57,6 @@ module.exports = class MessageHandler {
     }
 
     handle_sending_of_message (line) {
-        // console.log('Handling sending with line: ', line)
         if (!this.aes_key || !this.aes_key_established) {
             console.log('Cannot send message when aes_keys are not established.')
             return;
@@ -89,7 +87,6 @@ module.exports = class MessageHandler {
                     console.log('Cannot send file! Failed to read file with error: ', error);
                     return;
                 }
-
                 break;
             default:
                 message.type = 'text';
@@ -104,7 +101,6 @@ module.exports = class MessageHandler {
     handle_reception_of_message (data) {
         const message = this.decrypt_message(data);
         if (message === null) return;
-        // console.log('Handle reception of message: ', message)
         switch (message.type) {
             case 'file':
                 console.log('\n'+message.username+'> '+ 'Got file with name: ' + message.fileName);
@@ -127,8 +123,8 @@ module.exports = class MessageHandler {
     }
 
     encrypt_and_send_message (message) {
-        this.setup_cipher()
-        // console.log('Encrypting and sending message: ', message)
+        this.setup_cipher();
+
         let encrypted;
         try {
             encrypted = this.cipher.update(JSON.stringify(message), 'utf8', 'hex');
@@ -151,7 +147,6 @@ module.exports = class MessageHandler {
     decrypt_message (data) {
         this.setup_cipher();
         if (isJson(data)) return JSON.parse(data);
-        // console.log('Decrypting data: ', data)
         let decrypted;
         try {
             decrypted = this.decipher.update(data, 'hex', 'utf8');

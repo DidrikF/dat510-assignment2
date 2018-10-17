@@ -44,15 +44,6 @@ function gcd (a, b) {
     return b;//[b, signX * x, signY * y];
   }
   
-
-/**
- * An implementation of the Extended Euclidean Algorithm
- * Find the gcd also of fractions
- */
-function extendedEuclideanAlgorithm () {
-
-}
-
 /**
  * Algorithm to find the modulo of a fraction.
  * @param {number} numerator 
@@ -60,7 +51,6 @@ function extendedEuclideanAlgorithm () {
  * @param {number} n 
  */
 function modulo_of_fraction (numerator, denominator, n) {
-    // console.log('modulo of fraction: ', numerator, denominator, n)
     if (denominator === 0) return 0;
 
     for (let t = 1; t <= n; t++) {
@@ -125,7 +115,6 @@ function isJson(str) {
 
 
 module.exports.gcd = gcd;
-module.exports.extendedEuclideanAlgorithm = extendedEuclideanAlgorithm;
 module.exports.modulo_of_fraction = modulo_of_fraction;
 module.exports.mod = mod;
 module.exports.store_keys = store_keys;

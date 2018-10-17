@@ -1,4 +1,5 @@
 // A rudimentary implementation of Elliptic Curves over Zp
+
 const { modulo_of_fraction, mod, gcd } = require('./helpers')
 const blum_blum_shub = require('./blum-blum-shub');
 
@@ -35,7 +36,6 @@ module.exports = class EllipticCurve {
             seed++
             greatestCommonDevisor = gcd(seed, n);
         }
-        //console.log(greatestCommonDevisor, seed)
         console.log('Parameters to blum blum shub (p, q, seed): ', p, q, seed)
         const bits = blum_blum_shub(p, q, seed);
         return bits.join('');
@@ -57,18 +57,14 @@ module.exports = class EllipticCurve {
      * @returns {array} final_point
      */
     point_multiplication (G, n) { 
-        console.log('Point multiplication with: ', G, n)
-        // n = mod(n, this.cardinality)
-        // if (n=== 0) n = 18;
         if (n === 0) {
-            return 0 // every cardinality number of elements
+            return 0;
         } else if (n === 1) {
-            return G
+            return G;
         } else if (n % 2 === 1) {
             if (this.isPointAtInfinity(G)) return this.point_multiplication(this.currentG, n-1)
             return this.point_add(G, this.point_multiplication(G, n-1)) // Add when n is odd
         } else {
-            //console.log('Doubling: ', G)
             if (this.isPointAtInfinity(G)) return this.point_multiplication(this.currentG, n-1);
             if (this.givesVerticalTangent(G)) return this.point_multiplication([0, Infinity], n-1);
             return this.point_multiplication(this.point_double(G), n/2)
@@ -91,14 +87,11 @@ module.exports = class EllipticCurve {
             return this.point_double(P);
         }
 
-        // console.log(Xp, Yp, Xq, Yq)
         const delta = modulo_of_fraction((Yp-Yq),(Xp-Xq), this.p);
-        // console.log('Modulo of fraction (slope): ', delta)
         let Xr = Math.pow(delta, 2) - Xp - Xq;
         let Yr = delta*(Xp - Xr) - Yp;
         Xr = mod(Xr, this.p)
         Yr = mod(Yr, this.p)
-        console.log('Add result: ', Xr, Yr)
         return [Xr, Yr];
     }
 
@@ -109,26 +102,11 @@ module.exports = class EllipticCurve {
      */
     point_double (P) {
         const [Xp, Yp] = P;
-
-        /*
-        if(isPointAtInfinity(P)) {
-            return this.point_add(P, this.currentG);
-        }
-        
-
-        if (Yp === 0) {
-            return [0, Infinity];
-        }
-        */
-
-        // console.log('P: ', P)
         const delta = modulo_of_fraction((3*Math.pow(Xp, 2) + this.a), (2*Yp), this.p);
-        // console.log('Modulo of fraction (slope): ', delta)
         let Xr = Math.pow(delta, 2) - 2*Xp
         let Yr = delta*(Xp - Xr) - Yp;
         Xr = mod(Xr, this.p)
         Yr = mod(Yr, this.p)
-        console.log('Doubled result: ', Xr, Yr)
         return [Xr, Yr];
     }
 
@@ -139,12 +117,11 @@ module.exports = class EllipticCurve {
 
     isInverse (P, Q) {
         if ((P[0] === Q[0]) && (P[1] !== Q[1])) return true;
-        // if ((P[1] === 0) && (Q[1] === 0)) return true // tangent at y-coordinate gives point at infinity
         return false
     }
 
     givesVerticalTangent(P) {
-        if (P[1] === 0) return true // tangent at y-coordinate gives point at infinity
+        if (P[1] === 0) return true // tangent at y-coordinate gives point at infinity when doubling
         return false
     }
 
