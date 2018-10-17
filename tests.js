@@ -5,7 +5,7 @@ const EllipticCurve = require('./elliptic-curve')
 /**
  * Modulo of fraction test
  */
-
+console.log(`-3/6 mod 23 is expected to be 11 and was calculated to be: ${modulo_of_fraction(-3, 6, 23)}`);
 
 
 /**

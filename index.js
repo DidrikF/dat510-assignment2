@@ -45,10 +45,11 @@ console.log(`Curve cardinality: ${program.cardinality}\n`);
  * and then calculate a public key, or the previously generated keys are loaded from a file.
  */
 
+var private_key = null;
+var public_key = null;
+
 if (program.spawnKeys) {
     var EC = new EllipticCurve(program.a, program.b, program.generator, program.prime, program.cardinality); // 2,3,[3,6], 97,5
-    var private_key = null;
-    var public_key = null;
 
     // True random source to generate private key:
     axios.post('https://api.random.org/json-rpc/1/invoke', {
