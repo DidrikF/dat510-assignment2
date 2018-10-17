@@ -18,6 +18,7 @@ dat500-assignment2
 │   package.json    // Declares package dependencies for the project
 │   package-lock.json   // Lists the installed packages with exact version numbers
 |   picture.png // Picture that can be used to demonstrate sending encrypted files between client and server
+|   program_overview.PNG // Illustration showing the general flow of the program
 |   README.md // Explains the code and how to run it
 |   test.txt // Text file that can be used to demonstrate sending encrypted files between client and server
 |   tests.js // Contains tests for various functions and classes, primarily blum-blum-shub and elliptic curve implementations.
