@@ -18,6 +18,5 @@ module.exports  = function blum_blum_shub (p, q, seed) {
         X[i] = mod(Math.pow(X[i-1], 2), n)
         B[i] = mod(X[i], 2)
     }
-
     return B
 }

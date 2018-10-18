@@ -1,6 +1,6 @@
 # dat510-assignment2 - Cryptosystem
 
-## Implementing cryptosystem involving Elliptic Curve Diffie-Hellman key exchage, a Blum Blum Shub CSPSRN and AES to send encrypted messages between client and server
+## Implementing cryptosystem involving Elliptic Curve Diffie-Hellman key exchage, a Blum Blum Shub CSPRNG and AES to send encrypted messages between client and server
 
 ### The contents of the directory
 
